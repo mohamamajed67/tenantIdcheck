@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Tenant Lookup</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 2px #ffffff;
+        }
+        
+        button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #764ba2;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+        
+        #results {
+            margin-top: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            display: none;
+        }
+        
+        .result-item {
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced Tenant Lookup</h1>
+        <form id="lookup-form">
+            <div class="form-group">
+                <label for="tenant-input">Tenant Name or GUID</label>
+                <input type="text" id="tenant-input" required placeholder="Enter tenant name or GUID">
+            </div>
+            <div class="form-group">
+                <label for="environment">Environment</label>
+                <select id="environment">
+                    <option value="worldwide">Worldwide</option>
+                    <option value="us-gov">US Government</option>
+                    <option value="china">China</option>
+                </select>
+            </div>
+            <button type="submit">Lookup Tenant</button>
+        </form>
+        <div id="results">
+            <div class="result-item">
+                <span class="result-label">Search String:</span>
+                <span id="search-string"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Tenant ID:</span>
+                <span id="tenant-id"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Azure AD Instance:</span>
+                <span id="azure-ad-instance"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Tenant Scope:</span>
+                <span id="tenant-scope"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('lookup-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const results = document.getElementById('results');
+            results.style.display = 'none';
+            
+            setTimeout(() => {
+                document.getElementById('search-string').textContent = document.getElementById('tenant-input').value;
+                document.getElementById('tenant-id').textContent = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
+                document.getElementById('azure-ad-instance').textContent = document.getElementById('environment').value;
+                document.getElementById('tenant-scope').textContent = 'Example Scope';
+                
+                results.style.display = 'block';
+                results.classList.add('fade-in');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

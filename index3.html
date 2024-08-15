@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Tenant Lookup</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 2px #ffffff;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #764ba2;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        #results {
+            margin-top: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            display: none;
+        }
+
+        .result-item {
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+
+        .result-label {
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            color: #ffffff;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #ffffff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Advanced Tenant Lookup</h1>
+        <form id="lookup-form">
+            <div class="form-group">
+                <label for="tenant-input">Tenant Name or GUID</label>
+                <input type="text" id="tenant-input" required placeholder="Enter tenant name or GUID">
+            </div>
+            <div class="form-group">
+                <label for="environment">Environment</label>
+                <select id="environment">
+                    <option value="worldwide">Worldwide</option>
+                    <option value="us-gov">US Government</option>
+                    <option value="china">China</option>
+                </select>
+            </div>
+            <button type="submit">Lookup Tenant</button>
+        </form>
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Looking up tenant information...</p>
+        </div>
+        <div id="results">
+            <div class="result-item">
+                <span class="result-label">Search String:</span>
+                <span id="search-string"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Tenant ID:</span>
+                <span id="tenant-id"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Azure AD Instance:</span>
+                <span id="azure-ad-instance"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Tenant Scope:</span>
+                <span id="tenant-scope"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Default Domain:</span>
+                <span id="default-domain"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Region:</span>
+                <span id="region"></span>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var appInsights = window.appInsights || function (a) {
+            function b(a) { c[a] = function () { var b = arguments; c.queue.push(function () { c[a].apply(c, b) }) } } var c = { config: a }, d = document, e = window; setTimeout(function () { var b = d.createElement("script"); b.src = a.url || "https://az416426.vo.msecnd.net/scripts/a/ai.0.js", d.getElementsByTagName("script")[0].parentNode.appendChild(b) }); try { c.cookie = d.cookie } catch (a) { } c.queue = []; for (var f = ["Event", "Exception", "Metric", "PageView", "Trace", "Dependency"]; f.length;)b("track" + f.pop()); if (b("setAuthenticatedUserContext"), b("clearAuthenticatedUserContext"), b("startTrackEvent"), b("stopTrackEvent"), b("startTrackPage"), b("stopTrackPage"), b("flush"), !a.disableExceptionTracking) { f = "onerror", b("_" + f); var g = e[f]; e[f] = function (a, b, d, e, h) { var i = g && g(a, b, d, e, h); return !0 !== i && c["_" + f](a, b, d, e, h), i } } return c
+        }({
+            instrumentationKey: "c8a3abe8-e5ee-4154-8c6c-f12909c3f875"
+        });
+        window.appInsights = appInsights, appInsights.queue && 0 === appInsights.queue.length && appInsights.trackPageView();
+    </script>
+    <script>
+        document.getElementById('lookup-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const tenantInput = document.getElementById('tenant-input').value;
+            const environment = document.getElementById('environment').value;
+
+            results.style.display = 'none';
+            loading.style.display = 'block';
+
+            // Simulating an API call
+            setTimeout(() => {
+                loading.style.display = 'none';
+
+                // Populate results
+                document.getElementById('search-string').textContent = tenantInput;
+                document.getElementById('tenant-id').textContent = generateFakeGUID();
+                document.getElementById('azure-ad-instance').textContent = getAzureADInstance(environment);
+                document.getElementById('tenant-scope').textContent = getTenantScope(environment);
+                document.getElementById('default-domain').textContent = generateDefaultDomain(tenantInput);
+                document.getElementById('region').textContent = getRegion(environment);
+
+                results.style.display = 'block';
+                results.classList.add('fade-in');
+            }, 1500);
+        });
+
+        function generateFakeGUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function getAzureADInstance(environment) {
+            switch (environment) {
+                case 'worldwide': return 'https://login.microsoftonline.com/';
+                case 'us-gov': return 'https://login.microsoftonline.us/';
+                case 'china': return 'https://login.chinacloudapi.cn/';
+                default: return 'Unknown';
+            }
+        }
+
+        function getTenantScope(environment) {
+            switch (environment) {
+                case 'worldwide': return 'Global';
+                case 'us-gov': return 'US Government';
+                case 'china': return 'China';
+                default: return 'Unknown';
+            }
+        }
+
+        function generateDefaultDomain(tenantInput) {
+            // Remove non-alphanumeric characters and convert to lowercase
+            const sanitizedInput = tenantInput.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            return `${sanitizedInput}.onmicrosoft.com`;
+        }
+
+        function getRegion(environment) {
+            switch (environment) {
+                case 'worldwide': return 'Global';
+                case 'us-gov': return 'United States';
+                case 'china': return 'China';
+                default: return 'Unknown';
+            }
+        }
+    </script>
+</body>
+
+</html>
