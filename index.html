@@ -6,7 +6,11 @@
     <title>Advanced Tenant Lookup</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
-        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -27,7 +31,7 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             padding: 2rem;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
         }
         
         h1 {
@@ -58,7 +62,6 @@
             font-size: 1rem;
             transition: all 0.3s ease;
         }
-        
         input[type="text"]:focus, select:focus {
             outline: none;
             background: rgba(255, 255, 255, 0.2);
@@ -89,6 +92,18 @@
             border-radius: 8px;
             padding: 1rem;
             display: none;
+            position: relative;
+        }
+
+        .error-message {
+            margin-top: 2rem;
+            color: #ff4f4f;
+            font-weight: 600;
+            display: none;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
         }
         
         .result-item {
@@ -100,6 +115,21 @@
             font-weight: 600;
             margin-right: 0.5rem;
         }
+
+        .copy-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            fill: #ffffff;
+            transition: fill 0.3s ease;
+        }
+
+        .copy-icon:hover {
+            fill: #f0f0f0;
+        }
         
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -109,11 +139,28 @@
         .fade-in {
             animation: fadeIn 0.5s ease-out;
         }
+        
+        .copy-tooltip {
+            position: absolute;
+            top: -30px;
+            right: 0;
+            background-color: #ffffff;
+            color: #764ba2;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-tooltip.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Advanced Tenant Lookup</h1>
+        <h1>Tenant Lookup</h1>
         <form id="lookup-form">
             <div class="form-group">
                 <label for="tenant-input">Tenant Name or GUID</label>
@@ -122,16 +169,16 @@
             <div class="form-group">
                 <label for="environment">Environment</label>
                 <select id="environment">
-                    <option value="worldwide">Worldwide</option>
-                    <option value="us-gov">US Government</option>
-                    <option value="china">China</option>
+                    <option value="Worldwide">Worldwide</option>
+                    <option value="US Government">US Government</option>
+                    <option value="China">China</option>
                 </select>
             </div>
             <button type="submit">Lookup Tenant</button>
         </form>
-        <div id="results">
+        <div id="results" class="fade-in">
             <div class="result-item">
-                <span class="result-label">Search String:</span>
+                <span class="result-label">Tenant Name:</span>
                 <span id="search-string"></span>
             </div>
             <div class="result-item">
@@ -146,25 +193,17 @@
                 <span class="result-label">Tenant Scope:</span>
                 <span id="tenant-scope"></span>
             </div>
+            <svg class="copy-icon" onclick="copyResults()" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+            <div class="copy-tooltip">Copied!</div>
+        </div>
+        <div id="error-message" class="error-message">
+            <h4>Tenant not found.</h4>
+            <p>Uh oh. We couldn't find the tenant you were looking for. Double check your search and try again.</p>
         </div>
     </div>
 
-    <script>
-        document.getElementById('lookup-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const results = document.getElementById('results');
-            results.style.display = 'none';
-            
-            setTimeout(() => {
-                document.getElementById('search-string').textContent = document.getElementById('tenant-input').value;
-                document.getElementById('tenant-id').textContent = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
-                document.getElementById('azure-ad-instance').textContent = document.getElementById('environment').value;
-                document.getElementById('tenant-scope').textContent = 'Example Scope';
-                
-                results.style.display = 'block';
-                results.classList.add('fade-in');
-            }, 500);
-        });
-    </script>
+    <script src="./scripts.js"></script>
 </body>
 </html>
