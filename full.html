@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Tenant Lookup</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+        }
+        
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 2px #ffffff;
+        }
+        
+        button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #764ba2;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+        
+        #results {
+            margin-top: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            display: none;
+            position: relative;
+        }
+
+        .error-message {
+            margin-top: 2rem;
+            color: #ff4f4f;
+            font-weight: 600;
+            display: none;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .result-item {
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .copy-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            fill: #ffffff;
+            transition: fill 0.3s ease;
+        }
+
+        .copy-icon:hover {
+            fill: #f0f0f0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .copy-tooltip {
+            position: absolute;
+            top: -30px;
+            right: 0;
+            background-color: #ffffff;
+            color: #764ba2;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-tooltip.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tenant Lookup</h1>
+        <form id="lookup-form">
+            <div class="form-group">
+                <label for="tenant-input">Tenant Name or GUID</label>
+                <input type="text" id="tenant-input" required placeholder="Enter tenant name or GUID">
+            </div>
+            <button type="submit">Lookup Tenant</button>
+        </form>
+        <div id="results" class="fade-in">
+            <div class="result-item">
+                <span class="result-label">Tenant Name:</span>
+                <span id="search-string"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Tenant ID:</span>
+                <span id="tenant-id"></span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Tenant Root:</span>
+                <span id="root-tenant"></span>
+            </div>
+            <svg class="copy-icon" onclick="copyResults()" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+            <div class="copy-tooltip">Copied!</div>
+        </div>
+        <div id="error-message" class="error-message">
+            <h4>Tenant not found.</h4>
+            <p>Uh oh. We couldn't find the tenant you were looking for. Double check your search and try again.</p>
+        </div>
+    </div>
+
+    <script>
+        var lookupEnvironment = "Worldwide";
+        const baseUrl = "https://raw.githubusercontent.com/mohamamajed67/ms-sap-management/main/";
+
+        var lookupEnvironment = "Worldwide";
+        document.getElementById('tenant-input').setAttribute("placeholder", "contoso.onmicrosoft.com");
+
+        document.getElementById('lookup-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            lookupTenant();
+        });
+
+        async function lookupTenant() {
+    var tenant = document.getElementById('tenant-input').value.trim();
+    var resultsDiv = document.getElementById('results');
+    var errorMessageDiv = document.getElementById('error-message');
+
+    resetView();
+
+    var lookupUrl = "https://login.microsoftonline.com/" + tenant + "/.well-known/openid-configuration";
+
+    try {
+        const response = await fetch(lookupUrl);
+        if (!response.ok) {
+            throw new Error('Lookup failed');
+        }
+        const data = await response.json();
+
+                var tenantIdRegEx = /^https:\/\/login\.microsoftonline\.(?:us|com)\/([\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12})\/oauth2\/authorize$/;
+                var tenantAuthEndpoint = data.authorization_endpoint;
+                var tenantId = tenantAuthEndpoint.match(tenantIdRegEx)[1];
+
+                document.getElementById("search-string").textContent = tenant;
+                document.getElementById("tenant-id").textContent = tenantId;
+
+                var tenantRegion = "Unknown";
+                switch (data.tenant_region_scope) {
+                    case 'USGov':
+                        tenantRegion = "Azure AD Government";
+                        break;
+                    case 'WW':
+                        tenantRegion = "Azure AD Global";
+                        break;
+                    case 'China':
+                        tenantRegion = "Azure AD China";
+                        break;
+                }
+
+                var tenantScope = "Not applicable";
+                switch (data.tenant_region_sub_scope) {
+                    case 'DOD':
+                        tenantScope = "DOD";
+                        break;
+                    case 'GCC':
+                        tenantScope = "GCC";
+                        break;
+                    case 'GCC High':
+                        tenantScope = "GCC High";
+                        break;
+                }
+
+                // Fetch root tenant information
+                const rootTenant = await getRootTenant(tenantId);
+                document.getElementById("root-tenant").textContent = rootTenant;
+
+                resultsDiv.style.display = 'block';
+            } catch (error) {
+                handleError();
+            }
+        }
+        
+        async function getRootTenant(tenantId) {
+            const apiUrl = `https://gist.githubusercontent.com/mohamamajed67/e1bdc5b9bf8295f39da0847c6a34e57b/raw/65e5ddbaa5ceace1f12b8f5b71bc19cf56ca46dd/id`; 
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch CSV data');
+                }
+                const csvText = await response.text();
+                const csvData = parseCSV(csvText);
+                
+                const matchingRow = csvData.find(row => row.ID === tenantId);
+                return matchingRow ? matchingRow.Tenant : "Unknown";
+            } catch (error) {
+                console.error('Error fetching root tenant:', error);
+                return "Unknown";
+            }
+        }
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',');
+            return lines.slice(1).map(line => {
+                const values = line.split(',');
+                return headers.reduce((obj, header, index) => {
+                    obj[header.trim()] = values[index] ? values[index].trim() : '';
+                    return obj;
+                }, {});
+            });
+        }
+
+        function handleError() {
+            resetView();
+            document.getElementById('error-message').style.display = 'block';
+        }
+
+        function resetView() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        function copyResults() {
+            var resultsText = `
+                Tenant Name: ${document.getElementById('search-string').textContent}
+                Tenant ID: ${document.getElementById('tenant-id').textContent}
+                Tenant Root: ${document.getElementById('root-tenant').textContent}
+            `;
+            navigator.clipboard.writeText(resultsText).then(function() {
+                showCopyTooltip();
+            }, function(err) {
+                console.error('Failed to copy results: ', err);
+            });
+        }
+
+        function showCopyTooltip() {
+            var tooltip = document.querySelector('.copy-tooltip');
+            tooltip.classList.add('show');
+            setTimeout(() => {
+                tooltip.classList.remove('show');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
